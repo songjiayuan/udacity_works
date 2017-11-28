@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>OpenStreetMap 数据分析报告</title>
+</head>
+<body>
+<h3>
+	数据来源：
+https://www.openstreetmap.org/relation/119231<br>
+研究这个数据的很大原因是被这个城市的名字所吸引<br>
+很有趣，数据集也比较小，适合练习一下
+但同时因为数据集比较小，也会有些问题
+<br>
+</h3>
+<p>honolulu 檀香山（英语：Honolulu），或称火奴鲁鲁，为美国夏威夷州最大的城市暨首府。</p>
+<h3>文件大小</h3>
+<p>
+honolulu.osm ......... 59.9 MB<br>
+work.db .......... 32.7 MB<br>
+nodes.csv ............. 23.7 MB<br>
+nodes_tags.csv ........ 0.6 MB<br>
+ways.csv .............. 1.9 MB<br>
+ways_tags.csv ......... 4 MB<br>
+ways_nodes.cv ......... 7.8 MB <br>
+</p>
+<h2>地图中的问题：</h2>
+<p>
+	我在openstreetmap庞大的数据集中，选择了一个比较小的数据，进行练习分析<br>
+	发现了一些问题，并在mappars.py中作出了修改<br>
+	1。 nodes和ways中的二级标签tags呈现各种不同的格式<br>
+	比如说街道名称的名字和邮编格式不统一<br>
+	2 node 和way标签中的user和时间戳更改成了更舒服的格式
+</p>
+<p>
+现在查看一下邮编<br>
+	SELECT tags.value, COUNT(*) as count<br>
+FROM (SELECT * FROM nodes_tags<br>
+ UNION ALL<br>
+ SELECT * FROM ways_tags) tags<br>
+WHERE tags.key='postcode'<br>
+GROUP BY tags.value<br>
+ORDER BY count DESC;<br>
+</p>
+<p>
+这是结果：<br>
+96822,395<br>
+96815,281<br>
+96814,160<br>
+96826,102<br>
+96813,74<br>
+96819,48<br>
+......<br>
+96791,2<br>
+96792,2<br>
+96753,1<br>
+96783,1<br>
+96795,1<br>
+96841,1<br>
+96850,1<br>
+98622,1<br>
+我们看到只有一个的邮政编码是98开头的，所以我们可以猜想一下<br>
+这样的原因是什么<br>
+是数字失误还是位置错误或者什么别的原因<br>
+</p>
+<p>
+	寻找原因（1）<br>
+
+	sqlite> SELECT *<br>
+FROM nodes
+WHERE id IN (SELECT DISTINCT(id) FROM nodes_tags WHERE key='postcode'<br>
+AND value='48009')<br>
+结果：<br>
+4742640221,21.3083631,-157.839583,Sk-808,524909,1,46974305,"2017-03-19 am 08:36:55"<br>
+寻找原因（2）<br>
+sqlite> SELECT * FROM nodes_tags WHERE id=1234706337 and type='addr';<br>
+结果：<br>
+4742640221,housenumber,1677,addr<br>
+4742640221,postcode,98622,addr<br>
+4742640221,street,"Pensacola Street",addr<br>
+很好，现在我知道这个错误应该是输入数据时的打字失误<br>
+真正的数据是1677 Pensacola St, Honolulu, HI 96822<br>
+</p>
+<h2>现在 开始用SQL进行查询，进行进一步的交流</h2>>
+<h3>nodes标签的个数</h3>
+<p>
+	sqlite> SELECT COUNT(*) FROM nodes;
+</p>
+<p>
+	274031
+</p>
+<h3>ways标签的个数</h3>
+<p>
+	sqlite> SELECT COUNT(*) FROM ways;
+</p>
+<p>
+	30407
+</p>
+<h3>唯一用户的数量</h3>
+<p>
+	sqlite> SELECT COUNT(DISTINCT(e.uid))<br>
+FROM (SELECT uid FROM nodes UNION ALL SELECT uid FROM ways) e;<br>
+</p>
+<p>
+	557
+</p>
+<h3>排名前十用户</h3>
+<p>
+	sqlite> SELECT e.user, COUNT(*) as num<br>
+FROM (SELECT user FROM nodes UNION ALL SELECT user FROM ways) e<br>
+GROUP BY e.user<br>
+ORDER BY num DESC<br>
+LIMIT 10;<br>
+<p>
+Tom_Holland,100866
+Cbbaze,33807
+Ikiya,12719
+Kr4Z33,10663
+Julesreid,9814
+Chris Lawrence,9205
+Pdunn,8971
+Aaront,8217
+Woodpeck_Fixbot,8217
+Bdiscoe,5059
+</p>
+<h3>仅出现一次的用户</h3>
+<p>
+	 SELECT COUNT(*)<br>
+FROM<br>
+ (SELECT e.user, COUNT(*) as num<br>
+ FROM (SELECT user FROM nodes UNION ALL SELECT user FROM ways) e<br>
+ GROUP BY e.user<br>
+ HAVING num=1) u;<br>
+</p>
+<p>
+	124
+</p>
+<p>
+	这一点很有意思：<br>
+	因为多次提交说明提交者本人很专业，对这个很有兴趣，是主要的用户群体<br>
+	相反，只提交一次，在格式内容方面都更容易出错<br>
+	对此，对数据的审核应该更加谨慎<br>
+</p>
+
+<h3>amenity排名前十</h3>
+<p>
+	  SELECT value, COUNT(*) as num<br>
+FROM nodes_tags<br>
+WHERE key='amenity'<br>
+GROUP BY value<br>
+ORDER BY num DESC<br>
+LIMIT 10;<br>
+</p>
+<p>
+	restaurant|281<br>
+fast_food|144<br>
+school|92<br>
+place_of_worship|84<br>
+cafe|67<br>
+toilets|65<br>
+parking_entrance|55<br>
+bank|54<br>
+waste_basket|37<br>
+bar|28<br>
+</p>
+<h3>最大的地区</h3>
+<p>
+	sqlite> SELECT nodes_tags.value, COUNT(*) as num<br>
+FROM nodes_tags<br>
+ JOIN (SELECT DISTINCT(id) FROM nodes_tags WHERE<br>
+value='place_of_worship') i<br>
+ ON nodes_tags.id=i.id<br>
+WHERE nodes_tags.key='religion'<br>
+GROUP BY nodes_tags.value<br>
+ORDER BY num DESC<br>
+LIMIT 1;<br>
+</p>
+<p>
+	christian|75
+</p>
+<h3>最流行的菜肴</h3>
+<p>
+	 SELECT nodes_tags.value, COUNT(*) as num<br>
+FROM nodes_tags<br>
+ JOIN (SELECT DISTINCT(id) FROM nodes_tags WHERE value='restaurant')<br>
+ ON nodes_tags.id=i.id<br>
+WHERE nodes_tags.key='cuisine'<br>
+GROUP BY nodes_tags.value<br>
+ORDER BY num DESC;<br>
+</p>
+<p>
+	pizza|15<br>
+japanese|13<br>
+italian|11<br>
+american|9<br>
+chinese|7<br>
+indian|7<br>
+asian|6<br>
+regional|6<br>
+sushi|6<br>
+international|4<br>
+korean|4<br>
+vietnamese|4<br>
+....
+greek|1<br>
+hawaiian;filipino|1<br>
+japanese;noodles|1<br>
+japanese;seafood;sushi|1<br>
+japanese_ramen|1<br>
+local|1<br>
+local;american;breakfast|1<br>
+mediterranean; north_african|1<br>
+pancake|1<br>
+peruvian|1<br>
+ramen|1<br>
+
+</p>
+<h2>
+	结论：
+	1本文的数据很明显并不完整<br>
+	所以我们其实可以引用PokemonGo的数据进行对比补充<br>
+	而这实际上也会有问题，数据出现冲突时，我们应该更信任哪个数据，真的应该视问题而定<br>
+	2数据很小<br>
+	猜想是否和他的地理环境有关<br>
+	或者参与上传数据的不太多<br>
+	3只提交一次的用户也相对较多<br>
+	可以让更多的参与到这个数据集的贡献当中<br>
+	当然与此同时，更要加大在数据清理上的工作<br>
+	数据清洗真的是一个非常费时的过程，需要操作者对数据有足够的了解的基础上，想办法删除一些数据，修改一些数据，保留一些数据（凭直觉<br>），这是一个非常有意思的过程，我想，每个人对同一份数据集，所做的工作应该都是不一样的，因为这是一种艺术。需要靠你的精神力量。<br>
+	建议就是希望这个地图集可以使用GPS科技事实改变他的数据，这样就不会有那么多人为的错误产生<br>
+</h2>
+</body>
+</html>
