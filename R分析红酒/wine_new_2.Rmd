@@ -1,0 +1,765 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+```{r global_options,include=FALSE}
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+```
+
+# Wine Quality
+========================================================
+
+##数据集
+包含13个变量，1599行或观察。在2009年被Paulo Cortez等人创建
+目标：哪个化学成分影响红葡萄酒的质量？
+
+##读取文件
+```{r }
+getwd()
+win<-read.csv('wine.csv')
+```
+
+
+##对文件进行统计计数
+```{r }
+dim(win)#数据集的大小
+str(win)#数据的变量与意义
+summary(win)#数据的统计计数
+```
+
+
+通过观察，红葡萄酒的质量应该主要与酒精含量有关
+下面进行 研究
+##单变量的研究
+
+(1)评级的直方图
+```{r }
+summary(win$quality)
+library(ggplot2)
+qplot(data=win,x=quality,binwidth=1)+
+  scale_x_continuous(limits = c(2,9),breaks = seq(2,9,0.5))
+```
+
+
+大部分给红葡萄酒的分数是5或六分，
+相当于对专业评酒员来说这批红葡萄酒普遍属于
+中等水平，没有太高分，没有太低分。
+
+
+
+
+（2）不易挥发酸度的直方图fixed.acidity
+
+```{r }
+library(ggplot2)
+qplot(data=win,x=fixed.acidity,binwidth=1)+
+  scale_x_continuous(limits = c(4,16),breaks = seq(4,16,1))
+```
+
+
+不易挥发酸度的直方图类似于正态分布稍左偏，大部分酸度在7或8，其他相对离散
+
+
+
+（3）挥发性酸度直方图volatile.acidity
+
+```{r }
+library(ggplot2)
+qplot(data=win,x=volatile.acidity,binwidth=0.1)+
+  scale_x_continuous(limits = c(0.1,1.6),breaks = seq(0.1,1.6,0.1))
+```
+
+
+挥发性酸度分布相对均匀，有小部分较高酸度
+
+
+
+（4）柠檬酸直方图
+
+```{r  }
+library(ggplot2)
+qplot(data=win,x=citric.acid,binwidth=0.1)+
+  scale_x_continuous(limits = c(0,1),breaks = seq(0,1,0.1))
+```
+
+
+柠檬酸度分布相对均匀，有小部分较高酸度
+
+
+
+（5）余糖直方图residual.sugar
+
+```{r     }
+library(ggplot2)
+qplot(data=win,x=residual.sugar,binwidth=1)+
+  scale_x_continuous(limits = c(0,16),breaks = seq(0,16,1))
+```
+
+
+直方图左偏，大部分集中在2处
+
+
+
+（6）氯化物直方图
+
+```{r     }
+library(ggplot2)
+qplot(data=win,x=chlorides,binwidth=0.05)+
+  scale_x_continuous(limits = c(0.01,0.62),breaks = seq(0.01,0.62,0.05))
+```
+
+
+直方图左偏，大部分集中在较小的值，可见大部分氯化物含量很少
+
+
+
+（7）游离二氧化硫直方图
+
+```{r     }
+library(ggplot2)
+qplot(data=win,x=free.sulfur.dioxide,binwidth=5)+
+  scale_x_continuous(limits = c(1,72),breaks = seq(1,72,5))
+```
+
+
+直方图左偏，成一定的梯度，随游离二氧化硫增加，数量逐渐减少
+
+
+
+（8）总二氧化硫直方图
+
+```{r     }
+library(ggplot2)
+qplot(data=win,x=total.sulfur.dioxide,binwidth=5)+
+  scale_x_continuous(limits = c(6,80),breaks = seq(6,80,5))
+```
+
+
+总二氧化硫轻微左偏，分布相对游离二氧化硫均匀
+
+
+
+（9）密度的直方图
+
+```{r     }
+library(ggplot2)
+qplot(data=win,x=density,binwidth=0.001)+
+  scale_x_continuous(limits = c(0.99,1.01),breaks = seq(0.99,1.01,0.001))
+```
+
+
+密度的直方图近似正态分布
+
+
+
+（10）pH的直方图
+
+```{r     }
+library(ggplot2)
+qplot(data=win,x=pH,binwidth=0.05)+
+  scale_x_continuous(limits = c(2.7,4.01),breaks = seq(2.7,4.01,0.05))
+```
+
+
+pH的直方图近似正态分布
+
+
+
+（11）硫酸盐直方图
+
+```{r     }
+summary(win$sulphates)
+library(ggplot2)
+qplot(data=win,x=sulphates,binwidth=0.1)+
+  scale_x_continuous(limits = c(0.33,2),breaks = seq(0.33,2,0.1))
+```
+
+
+硫酸盐直方图左偏，大部分在0.6附近
+
+
+
+
+
+(12)酒精含量直方图
+
+```{r     }
+summary(win$alcohol)
+library(ggplot2)
+qplot(data=win,x=alcohol,binwidth=0.5)+
+  scale_x_continuous(limits = c(8.4,15),breaks = seq(8.4,15,0.5))
+```
+
+
+直方图左偏，大部分酒精含量在9附近，高酒精较少
+
+##单变量分析
+通过12幅图对单变量的研究，我们对数据有了基本的认识
+1 数据的结构是什么？
+这个整⻬的数据集包含1599 种红酒，以及 11 个关于酒的化学成分的变量。
+⾄少 3 名葡萄酒专家对每种酒的质量进⾏了评分(quality变量)，分数在 0（⾮常差）和
+10（⾮常好）之间.评分的中位数是6.
+
+2 数据集中最感兴趣的特性是什么？
+数据集的只要特点是酒精含量与获得的评分。我想确定哪些特性最适合预测红葡萄酒的
+质量。我怀疑酒精含量和一些其他变量的组合可以用来建立一个预测模型关于红葡萄酒
+的质量。
+
+3 在那些你感兴趣的特性中，你认为数据集中哪些其他的特性可以帮助你去研究？
+酒精含量，柠檬酸，硫酸盐可能对红葡萄酒的质量有影响
+
+4 你可以从现有的变量中再创建新的变量吗？
+真的，从已知的数据集中，我目前并想不到怎样构建创建一个新的变量
+能有益于我的研究
+
+5 在你研究的这些变量中，有什么不同寻常的分布？
+你是否会对数据进行整理或更改数据的格式，如果是，为什么要这么做？
+大部分的分布还是很趋向于正态分布，所以我并没有再进行整理
+
+
+##两个变量之间的研究
+```{r fig.width=15,fig.height=15}
+#install.packages('GGally')
+library(GGally)
+theme_set(theme_minimal(20))#设置主题
+set.seed(1836)#设置种子,以便我们得到可重复的结果
+#pf_subset<-pf[ , c(2:15)]#只需要部分变量
+win_subset <- win[ , c(2:13)] 
+#names(pf_subset)
+ggpairs(win_subset,
+        upper=list(continuous=wrap('cor',size=3)))
+#变量标签是在散点图矩阵的外边缘上，而非对角线上。如果你希望标签在对角线上，你可以在 ggpairs 命令中设置 axisLabels = 'internal' 参数。
+#改变了文字和图形的大小，使图形更易观察
+```
+
+
+这幅图说明数据集中每个变量两两之间的关系和他们自己的曲线变化
+其中各个变量与质量评分之间的关系是我主要关注的
+其中可以看到有正向关系的变量有酒精含量，硫酸盐，柠檬酸
+
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$fixed.acidity,win$quality,method = 'pearson')
+
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$volatile.acidity,win$quality,method = 'pearson')
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$alcohol,win$quality,method = 'pearson')
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$sulphates,win$quality,method = 'pearson')
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$pH,win$quality,method = 'pearson')
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$citric.acid,win$quality,method = 'pearson')
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$density,win$quality,method = 'pearson')
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$total.sulfur.dioxide,win$quality,method = 'pearson')
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$free.sulfur.dioxide,win$quality,method = 'pearson')
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$chlorides,win$quality,method = 'pearson')
+```
+
+```{r     }
+knitr::opts_chunk$set(message = FALSE,warning = FALSE,echo = FALSE)
+cor.test(win$residual.sugar,win$quality,method = 'pearson')
+```
+
+
+
+
+###（1）这是酒精含量和评分等级的散点图
+我们可以看到线性拟合左下角应该往下一些
+```{r     }
+#names(win)
+ggplot(aes(alcohol,quality),data =win )+
+  geom_point(position = 'jitter')+
+  geom_smooth(method = 'lm',color='red')+
+  scale_x_continuous(limits = c(8.5,15),breaks = seq(8.5,15,0.5))+
+  scale_y_continuous(limits = c(3,8),breaks = seq(3,8,1))
+```
+
+
+####情况还好，我试着另一种方式：箱线图也许会更好
+####（y轴为连续变量，x轴为分类变量）
+
+```{r     }
+ggplot(aes(factor(quality),alcohol),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(8, 16))
+```
+
+
+####该图可以看出当酒精含量有一定增加，质量评分也会有增加
+####再看看我比较关注的其他特性与质量评分之间的关系
+
+
+###（2）硫酸盐与质量评价的关系
+```{r     }
+summary(win$sulphates)
+ggplot(aes(factor(quality),sulphates),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(0.33,2))
+```
+
+
+####该图可以看出硫酸盐和酒精的影响很相似
+####只是幅度小很多
+
+###（3）柠檬酸与质量评价的关系
+names(win)
+```{r     }
+summary(win$citric.acid)
+ggplot(aes(factor(quality),citric.acid),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(0,1))
+```
+
+
+####该图可以看出柠檬酸和硫酸盐的影响很相似
+####只是他的数据更为离散
+
+###（4）fixed.acidity与质量评价的关系
+
+```{r     }
+summary(win$fixed.acidity)
+ggplot(aes(factor(quality),fixed.acidity),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(4.5,16))
+```
+
+####该图可以看出fixed.acidity和柠檬酸影响很相似，都比较离散
+
+
+###（5）volatile.acidity与质量评价的关系
+```{r     }
+
+summary(win$volatile.acidity)
+ggplot(aes(factor(quality),volatile.acidity),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(0.12,1.6))
+```
+
+
+####该图可以看出volatile acidity逐渐升高，质量评级分数在逐渐下降
+
+
+###（6） residual.sugar与质量评价的关系
+```{r     }
+summary(win$residual.sugar)
+ggplot(aes(factor(quality),residual.sugar),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(0.5,10))
+```
+
+####该图可以看出residual sugar比较均匀，大部分都在5以下
+####只是有一些比较大的异常值，在中等的评级上
+
+
+###（7） chlorides与质量评价的关系
+
+```{r     }
+summary(win$chlorides)
+ggplot(aes(factor(quality),chlorides),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(0.012,0.612))
+```
+
+####该图可以看出chlorides与residual sugar比较相似
+####但是更为集中
+####只是有一些比较大的异常值，在中等的评级上
+
+
+###（8） free.sulfur.dioxide与质量评价的关系
+
+```{r     }
+summary(win$free.sulfur.dioxide)
+ggplot(aes(factor(quality),free.sulfur.dioxide),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(1,72))
+```
+
+####该图可以看出free.sulfur.dioxide
+####的质量评级类似正太分布，对质量评价没什么影响
+
+###（9） total.sulfur.dioxide与质量评价的关系
+
+```{r     }
+summary(win$total.sulfur.dioxide)
+ggplot(aes(factor(quality),total.sulfur.dioxide),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(6,200))
+```
+
+####该图可以看出total.sulfur.dioxide和free.sulfur.dioxide相似
+####稍微离散一些
+####的质量评级类似正太分布，对质量评价没什么影响
+
+
+###（9） pH与质量评价的关系
+
+```{r     }
+summary(win$pH)
+ggplot(aes(factor(quality),pH),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(2.7,4.1))
+```
+
+####该图也可以看出ph与质量评级没有什么影响
+####大概都处在同一位置
+
+###（10） density与质量评价的关系
+
+```{r     }
+summary(win$density)
+ggplot(aes(factor(quality),density),data =win )+
+  geom_boxplot(alpha=0.5)+
+  geom_point(position = 'jitter',alpha=0.3)+
+  coord_cartesian(ylim = c(0.99,1.004))
+```
+
+####该图也可以看出density和ph很相似
+####大概都处在同一位置，但更为离散
+
+
+##双变量分析
+1 谈论一下你在这部分研究中所观察到的一些关联，一些特性是怎样随一些特性
+变化的？
+质量评级红葡萄酒中酒精含量有一定的相关性
+在某些程度上，酒精含量越高，红葡萄酒的评级越好。但这种相关性
+并不十分明显。为0.476.
+另外一些特性可以被纳入模型来考虑质量评级的差异
+
+2 除了酒精含量，你还看到有别的什么有趣的关联吗？
+chlorides，residual.sugar这两个变量，似乎对质量评级没有什么影响。
+
+3 你发现最强的关系是什么？
+红葡萄酒的质量评级与其中酒精的含量是积极和这里面最强相关的了
+
+
+##多变量研究  
+以质量评级当做分类变量，用渐变的线条
+来观察多个变量与质量评级之间的关系
+###density VS alcohol VS quality
+```{r     }
+summary(win$density)
+ggplot(aes(x = alcohol,y = density, color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(0.985, 1.005) +
+  labs(y = 'Density',x = 'Alcohol') +
+  ggtitle("density VS alcohol VS quality")
+```
+
+####该图说明了density随着酒精含量的增加
+####他的含量在减少，他与酒精含量有关，与质量评级关系不大
+
+
+###fixed.acidity VS alcohol VS quality
+
+```{r     }
+summary(win$fixed.acidity)
+ggplot(aes(x = alcohol,y = fixed.acidity, color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(4.6, 16) +
+  labs(y = 'fixed.acidity',x = 'Alcohol') +
+  ggtitle("fixed.acidity VS alcohol VS quality")
+```
+
+####该图说明了，拥有较高的fixed.acidity ，质量评级相对较高
+
+
+###volatile.acidity VS alcohol VS quality
+
+```{r     }
+summary(win$volatile.acidity)
+ggplot(aes(x = alcohol,y = volatile.acidity, color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(0.12, 1.6) +
+  labs(y = 'volatile.acidity',x = 'Alcohol') +
+  ggtitle("volatile.acidity VS alcohol VS quality")
+```
+
+####该图说明了拥有较高含量的volatile.acidity，质量评级相对较低
+
+
+###citric.acid VS alcohol VS quality
+
+```{r     }
+summary(win$citric.acid)
+ggplot(aes(x = alcohol,y = citric.acid, color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(0, 1) +
+  labs(y = 'citric.acid',x = 'Alcohol') +
+  ggtitle("citric.acid VS alcohol VS quality")
+```
+
+####该图说明了拥有较高含量的citric.acid，质量评级越高
+
+
+###residual.sugar VS alcohol VS quality
+
+```{r     }
+summary(win$residual.sugar)
+ggplot(aes(x = alcohol,y = residual.sugar, color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(0.5, 15.5) +
+  labs(y = 'residual.sugar',x = 'Alcohol') +
+  ggtitle("residual.sugar VS alcohol VS quality")
+```
+
+####该图说明了拥有的residual.sugar含量与质量评级没什么关系
+
+
+###chlorides VS alcohol VS quality
+
+```{r     }
+summary(win$chlorides)
+ggplot(aes(x = alcohol,y = chlorides, color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(0.012, 0.4) +
+  labs(y = 'chlorides',x = 'Alcohol') +
+  ggtitle("chlorides VS alcohol VS quality")
+```
+
+####该图说明了拥有的chlorides含量与质量评级没什么关系
+
+
+###free.sulfur.dioxide VS alcohol VS quality
+
+```{r     }
+summary(win$free.sulfur.dioxide)
+ggplot(aes(x = alcohol,y = free.sulfur.dioxide, 
+           color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(1, 50) +
+  labs(y = 'free.sulfur.dioxide',x = 'Alcohol') +
+  ggtitle("free.sulfur.dioxide VS alcohol VS quality")
+```
+
+####该图说明了拥有的free.sulfur.dioxide含量与质量评级没什么关系
+####只是他比之前的图更离散
+
+
+###total.sulfur.dioxide VS alcohol VS quality
+
+```{r     }
+summary(win$total.sulfur.dioxide)
+ggplot(aes(x = alcohol,y = total.sulfur.dioxide, 
+           color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(6, 200) +
+  labs(y = 'total.sulfur.dioxide',x = 'Alcohol') +
+  ggtitle("total.sulfur.dioxide VS alcohol VS quality")
+```
+
+####该图说明了拥有的total.sulfur.dioxide含量与质量评级没什么关系
+
+
+###pH VS alcohol VS quality
+
+```{r     }
+summary(win$pH)
+ggplot(aes(x = alcohol,y = pH, 
+           color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(2.7, 4.1) +
+  labs(y = 'pH',x = 'Alcohol') +
+  ggtitle("pH VS alcohol VS quality")
+```
+
+####该图说明了同一酒精含量下拥有较高含量的ph，质量评级越低
+
+
+###sulphates VS alcohol VS quality
+
+```{r     }
+summary(win$sulphates)
+ggplot(aes(x = alcohol,y = sulphates, 
+           color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(0.33, 1.5) +
+  labs(y = 'sulphates',x = 'Alcohol') +
+  ggtitle("sulphates VS alcohol VS quality")
+```
+
+####该图说明了同一酒精含量下拥有较高含量的sulphates，质量评级越高
+
+
+###由于我这次想研究的是大部分的数据，所以我选择删掉部分值
+###以便能看到更清晰的趋势
+
+##多变量分析
+1 讨论一下你在这部分研究中观察到的一些关系，有哪些特性可以 加强
+你所关心的特性？
+sulphates很符合这一特点，同一酒精含量中sulphates越高，评级分数也越高，
+这种渐变的颜色非常适合观察
+
+2 在各个特性之间有没有有趣或令人惊讶的关联？
+volatile.acidity的含量似乎是越低越好，但是最后还是有一个交叉
+结果发现酒精含量越高，volatile.acidity含量反而降低
+
+
+##最终成图和汇总
+在这部分我会选取本次数据分析中最具代表的三个图
+做一个总结
+
+第一幅：
+
+```{r     }
+summary(win$quality)
+library(ggplot2)
+qplot(data=win,x=quality,binwidth=0.5)+
+  scale_x_continuous(limits = c(2,9),breaks = seq(2,9,1))+
+  labs(y = 'kinds of Red Wine',x = 'Quality') +
+  ggtitle("Red wine rating score distribution")
+```
+
+第一幅，研究结果变量，大部分位于5，6评分，奠定了整个数据集的基础。
+评分基本上都在中等，没有1，2分，没有9，10分
+较高较低分也只占小部分
+
+第二幅：
+
+```{r  }
+ggplot(aes(factor(quality),alcohol),data =win )+
+  geom_boxplot(alpha=0.5,color='green')+
+  geom_point(position = 'jitter',alpha=0.3,color='pink')+
+  coord_cartesian(ylim = c(8, 16))+
+  labs(y = 'Alcohol content',x = 'Quality') +
+  ggtitle("Alcohol content Pk Quality")
+```
+
+第二幅，研究酒精含量与评分的积极关系
+使用箱型图和散点图分析这两个变狼之间的关系
+随着质量评分的升高，酒精含量也在升高
+
+第三幅：
+
+```{r     }
+summary(win$sulphates)
+ggplot(aes(x = alcohol,y = sulphates, 
+           color = factor(quality)),data =win)+
+  geom_jitter(alpha = 0.2) +
+  scale_color_brewer(palette = "Blues") +
+  geom_smooth(method = "lm", se = FALSE,size=1) +
+  ylim(0.33, 1.5) +
+  labs(y = 'sulphates',x = 'Alcohol') +
+  ggtitle("sulphates VS alcohol VS quality")
+```
+
+第三幅，其他变量，如sulphates这个代表变量与酒精，与评分的关系
+除了酒精含量，sulphates也明显表现出随他含量的升高，质量评级也在升高
+
+###关于三幅图
+
+
+
+
+
+```{r     }
+library(ggplot2)
+library(GGally)
+library(scales)
+library(memisc)
+```
+
+
+names(win)
+```{r     }
+m1 <- lm(I(quality) ~ I(alcohol), data = win)
+m2 <- update(m1, ~ . + alcohol)
+m3 <- update(m2, ~ . + pH)
+m4 <- update(m3, ~ . + density)
+m5 <- update(m4, ~ . + sulphates)
+m6 <- update(m5, ~ . + fixed.acidity)
+m7 <- update(m6, ~ . + residual.sugar)
+m8 <- update(m7, ~ . + citric.acid)
+m9 <- update(m8, ~ . + volatile.acidity)
+m10 <-update(m9, ~ . + chlorides)
+m11 <-update(m10, ~ . + free.sulfur.dioxide)
+m12 <-update(m11, ~ . + total.sulfur.dioxide)
+
+mtable(m1, m2, m3, m4, m5, m6,m7,m8,m9,m10,m11,m12)
+```
+
+
+
+
+
+##反思：
+种整个项目做下来，觉得舒服，从一开始不知道该从哪下手
+到后来一步步研究，从一个变量到两个到多个，从一个方面到多个方面对
+数据集有了更立体的认识。
+
+之前选择除了酒精含量以外的变量进行分析，不好观察。
+现在直接用质量评级进行分类，果然变得更加清晰
+
+这个数据集研究的目的是红葡萄酒中的哪种成分会让他获得更高的评级分数
+他只包含葡萄酒中成分的介绍，而众所周知，红葡萄酒的产地，品牌，
+年份对酒本身有着很大的影响
+以后的工作中会希望能够完善这方面的信息
+
+
+
+
